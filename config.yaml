@@ -1,0 +1,86 @@
+# Configuration for Image Dehazing Pipeline
+
+# Model Configuration
+models:
+  aodnet:
+    enabled: true
+    weights_path: "models/aodnet.pth"
+    description: "All-in-One Dehazing Network - Fast and efficient"
+    
+  dehazenet:
+    enabled: true
+    weights_path: "models/dehazenet.pth"
+    description: "DehazeNet - End-to-end haze removal"
+    
+  msbdn:
+    enabled: true
+    weights_path: "models/msbdn.pth"
+    description: "Multi-Scale Boosted Dehazing Network - High quality"
+
+# Preprocessing Configuration
+preprocessing:
+  resize: null  # null or [height, width]
+  normalize: true
+  batch_size: 1
+
+# Postprocessing Configuration
+postprocessing:
+  clip_values: true
+  denoise: false
+  sharpen: false
+
+# Dataset Configuration
+datasets:
+  root_dir: "data"
+  types: ["I-Haze", "N-Haze", "Dense-Haze"]
+  splits: ["train", "test", "val"]
+
+# Evaluation Configuration
+evaluation:
+  metrics: ["psnr", "ssim", "lpips", "mae", "mse"]
+  save_images: true
+  generate_visualizations: true
+  
+# Hallucination Detection
+hallucination:
+  edge_detection: true
+  texture_analysis: true
+  color_consistency: true
+  
+# Web Dashboard Configuration
+web:
+  host: "localhost"
+  port: 8501
+  max_file_size: 50MB
+  supported_formats: ["jpg", "jpeg", "png", "bmp", "tiff"]
+
+# Haze Generation Configuration
+haze_generation:
+  default_type: "moderate"
+  types:
+    light:
+      beta: 0.3
+      fog_layers: 1
+      fog_density: [0.05, 0.15]
+      particle_density: 0.005
+    moderate:
+      beta: 0.8
+      fog_layers: 2
+      fog_density: [0.1, 0.3]
+      particle_density: 0.015
+    heavy:
+      beta: 1.5
+      fog_layers: 4
+      fog_density: [0.2, 0.5]
+      particle_density: 0.03
+    extreme:
+      beta: 2.0
+      fog_layers: 6
+      fog_density: [0.3, 0.7]
+      particle_density: 0.05
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  file: "logs/dehazing.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

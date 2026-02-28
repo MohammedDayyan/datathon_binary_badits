@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atmospheric Dehazing Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--border);
+            padding: 40px;
+            margin-bottom: 24px;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 48px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: #eff6ff;
+        }
+
+        .upload-area svg {
+            width: 48px;
+            height: 48px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            background: var(--text-main);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #1e293b;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary { background: var(--accent); }
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover {
+            background: #f1f5f9;
+        }
+
+        .flex-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        #file-info {
+            display: none;
+            margin-top: 16px;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        #process-section {
+            display: none;
+            margin-top: 24px;
+        }
+
+        /* Results view */
+        #results-section {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .comparison-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .image-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .image-card span {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .image-card img {
+            width: 100%;
+            border-radius: 8px;
+            object-fit: contain;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Loader */
+        .loader-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .comparison-layout { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+            .flex-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Atmospheric Dehazing</h1>
+        <p>Advanced recovery modeling via DehazeNet and AOD-Net Model</p>
+    </div>
+
+    <!-- Upload Interface -->
+    <div class="card" id="upload-card">
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        
+        <div class="upload-area" id="drop-zone" onclick="document.getElementById('imageInput').click()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            <div class="upload-text">Click to browse or drag image here</div>
+            <div class="upload-hint">Supports JPG, PNG (Max 10MB)</div>
+        </div>
+
+        <div id="file-info">Selected: <span id="filename"></span></div>
+
+        <div id="process-section">
+            <button id="processBtn" class="btn btn-primary" onclick="processImage()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Apply Dehazing Filter
+            </button>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div class="card loader-container" id="loader">
+        <div class="spinner"></div>
+        <div style="font-weight: 500; color: var(--text-main);">Processing Image...</div>
+        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Computing transmission map and radiance recovery</div>
+    </div>
+
+    <!-- Results Interface -->
+    <div class="card" id="results-section">
+        <div class="comparison-layout">
+            <div class="image-card">
+                <span>Original</span>
+                <img id="origDisplay" src="" alt="Original Image">
+            </div>
+            <div class="image-card">
+                <span>Recovered</span>
+                <img id="dehazedDisplay" src="" alt="Dehazed Image">
+            </div>
+        </div>
+
+        <div class="flex-buttons">
+            <a id="downloadBtn" class="btn btn-primary" download="dehazed_result.png">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Save Recovered Image
+            </a>
+            <button class="btn btn-outline" onclick="resetUI()">Upload Another</button>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric">
+                <div class="metric-value" id="m-psnr">--</div>
+                <div class="metric-label">PSNR</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-ssim">--</div>
+                <div class="metric-label">SSIM</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-mse">--</div>
+                <div class="metric-label">MSE</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="m-detail">--</div>
+                <div class="metric-label">Detail Pres.</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let uploadedImage = null;
+
+    // File input handling
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        if (e.target.files.length > 0) handleFile(e.target.files[0]);
+    });
+
+    // Drag and drop handling
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--accent)'; });
+    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.borderColor = ''; });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '';
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            uploadedImage = e.target.result;
+            document.getElementById('filename').textContent = file.name;
+            document.getElementById('file-info').style.display = 'block';
+            document.getElementById('process-section').style.display = 'block';
+            
+            // Set original image preview instantly
+            document.getElementById('origDisplay').src = uploadedImage;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function processImage() {
+        if (!uploadedImage) return;
+
+        // UI State: Loading
+        document.getElementById('upload-card').style.display = 'none';
+        document.getElementById('results-section').style.display = 'none';
+        document.getElementById('loader').style.display = 'flex';
+
+        try {
+            const response = await fetch('/dehaze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: uploadedImage })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Populate results
+                document.getElementById('dehazedDisplay').src = result.dehazed_image;
+                document.getElementById('downloadBtn').href = result.dehazed_image;
+                
+                // Populate metrics
+                document.getElementById('m-psnr').textContent = result.metrics.psnr;
+                document.getElementById('m-ssim').textContent = result.metrics.ssim;
+                document.getElementById('m-mse').textContent = result.metrics.mse;
+                document.getElementById('m-detail').textContent = result.metrics.detail_preservation;
+
+                // UI State: Show Results
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('results-section').style.display = 'block';
+            } else {
+                throw new Error(result.error || 'Server error occurred');
+            }
+        } catch (error) {
+            alert('Failed to process image: ' + error.message);
+            resetUI();
+        }
+    }
+
+    function resetUI() {
+        uploadedImage = null;
+        document.getElementById('imageInput').value = '';
+        document.getElementById('file-info').style.display = 'none';
+        document.getElementById('process-section').style.display = 'none';
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('results-section').style.display = 'none';
+        document.getElementById('upload-card').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
