@@ -29,5 +29,6 @@ In the Indian context, image dehazing is especially important during North India
 ## Getting Started
 1. Install dependencies: `pip install -r requirements.txt`
 2. Download pre-trained models to `models/` directory
-3. Run web dashboard: `python web/app.py`
-4. Upload hazy images through the web interface for dehazing
+3. Run the server using  `python run_server.py`
+4. Run web dashboard: `python professional_dehazer.py`
+5. Upload hazy images through the web interface for dehazing
